@@ -18,7 +18,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
-  origin: 'https://one-tapp-frontend.vercel.app'
+  origin: 'https://onetapfrontend.vercel.app'
 }));
 
 // Routes
@@ -66,9 +66,9 @@ app.post('/maya-checkout', async (req, res) => {
           contact: { phone, email }
         },
         redirectUrl: {
-          success: 'https://one-tapp-frontend.vercel.app/success',
-          failure: 'https://one-tapp-frontend.vercel.app/failure',
-          cancel: 'https://one-tapp-frontend.vercel.app/cancel'
+          success: 'https://onetapfrontend.vercel.app/success',
+          failure: 'https://onetapfrontend.vercel.app/failure',
+          cancel: 'https://onetapfrontend.vercel.app/cancel'
         },
         requestReferenceNumber,
         items: [
