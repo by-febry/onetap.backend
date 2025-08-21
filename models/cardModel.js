@@ -1,53 +1,38 @@
 const mongoose = require('mongoose');
 
-const cardSchema = mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'User',
-    },
-    nfcId: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    template: {
-      type: String,
-      required: true,
-      default: 'default',
-    },
-    socialLinks: {
-      linkedin: String,
-      twitter: String,
-      facebook: String,
-      instagram: String,
-    },
-    website: String,
-    bio: String,
-    customFields: {
-      type: Map,
-      of: String,
-    },
-    analytics: {
-      views: {
-        type: Number,
-        default: 0,
-      },
-      shares: {
-        type: Number,
-        default: 0,
-      },
-      lastViewed: Date,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+const cardSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  {
-    timestamps: true,
+  cardUid: {
+    type: String,
+    unique: true,
+    required: false // optional, as per your spec
+  },
+  label: {
+    type: String,
+    required: true
+  },
+  assignedUrl: {
+    type: String,
+    required: true
+  },
+  defaultProfileId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Profile',
+    required: false // optional
+  },
+  status: {
+    type: String,
+    enum: ['active', 'disabled', 'lost'],
+    default: 'active'
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
-);
+});
 
 module.exports = mongoose.model('Card', cardSchema); 

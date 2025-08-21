@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/errorMiddleware');
 const axios = require('axios');
 const Subscription = require('./models/subscriptionModel');
+const tapRoutes = require('./routes/tapRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -18,78 +19,33 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
-  origin: 'https://onetapfrontend.vercel.app'
+  origin: [
+    'http://localhost:3000',
+    'https://onetapp-webpage-3wnn.vercel.app',
+    'https://onetapp-webpage.vercel.app',
+    'https://onetapp-client1-card.vercel.app',
+    'http://localhost:60275',
+    'http://localhost:63726'
+  ]
 }));
 
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/users/subscriptions', require('./routes/userSubscriptionRoutes'));
 app.use('/api/cards', require('./routes/cardRoutes'));
 app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
-// app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/profiles', require('./routes/profileRoutes'));
+app.use('/api/events', require('./routes/eventRoutes'));
+app.use('/api/taps', tapRoutes);
+app.use('/api', require('./routes/dashboardRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
-// app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/activity-logs', require('./routes/activityLogRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/contact', require('./routes/contactRoutes'));
 
 app.get('/', (req, res) => {
   res.send('NFC Backend API is running!');
-});
-
-app.post('/maya-checkout', async (req, res) => {
-  try {
-    const { email, phone, plan, billingPeriod } = req.body;
-    let amount = 99;
-    if (plan === 'Pro Tap') amount = 299;
-    if (plan === 'Power Tap') amount = 899;
-    if (billingPeriod === 'yearly') {
-      if (plan === 'Starter Tap') amount = 999;
-      if (plan === 'Pro Tap') amount = 2999;
-      if (plan === 'Power Tap') amount = 8999;
-    }
-    const requestReferenceNumber = `SUBSCRIPTION-${Date.now()}`;
-
-    // Save the subscription as pending
-    await Subscription.create({
-      email,
-      phone,
-      plan,
-      billingPeriod,
-      status: 'pending',
-      requestReferenceNumber
-    });
-
-    const response = await axios.post(
-      process.env.MAYA_API_URL + '/checkout/v1/checkouts',
-      {
-        totalAmount: { value: amount, currency: 'PHP' },
-        buyer: {
-          firstName: 'NFC',
-          lastName: 'User',
-          contact: { phone, email }
-        },
-        redirectUrl: {
-          success: 'https://onetapfrontend.vercel.app/success',
-          failure: 'https://onetapfrontend.vercel.app/failure',
-          cancel: 'https://onetapfrontend.vercel.app/cancel'
-        },
-        requestReferenceNumber,
-        items: [
-          {
-            name: plan,
-            quantity: 1,
-            totalAmount: { value: amount, currency: 'PHP' }
-          }
-        ]
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(process.env.MAYA_PUBLIC_KEY + ':').toString('base64')}`
-        }
-      }
-    );
-    res.json({ redirectUrl: response.data.redirectUrl });
-  } catch (error) {
-    res.status(500).json({ error: error.response ? error.response.data : error.message });
-  }
 });
 
 // Error Handler

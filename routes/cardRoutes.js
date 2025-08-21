@@ -1,74 +1,56 @@
 const express = require('express');
 const router = express.Router();
-const Card = require('../models/cardModel');
+const {
+    getCardsForAdmin,
+    getMyCards,
+    getCardByIdPublic,
+    getCardByUidPublic,
+    createCard,
+    getCardByIdForAdmin,
+    getMyCardById,
+    updateCard,
+    updateMyCard,
+    deleteCard,
+    deleteMyCard,
+    getCardUserProfileByUid,
+    getCardAnalytics,
+    getCardTapLogs
+} = require('../controllers/cardController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// @desc    Get all cards
-// @route   GET /api/cards
-// @access  Private/Admin
-router.get('/', protect, authorize('admin'), async (req, res) => {
-  try {
-    const cards = await Card.find({}).populate('user', 'name email');
-    res.json({ cards });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
+// Public routes
+router.route('/public/:id').get(getCardByIdPublic);
+router.route('/public/uid/:cardUid').get(getCardByUidPublic);
+router.route('/dynamic/:cardUid').get(getCardUserProfileByUid);
 
-// @desc    Create a new card
-// @route   POST /api/cards
-// @access  Private
-router.post('/', async (req, res) => {
-  try {
-    const { user, nfcId, template, socialLinks, website, bio, customFields } = req.body;
-    if (!user || !nfcId) {
-      return res.status(400).json({ message: 'User and NFC ID are required' });
-    }
-    const card = await Card.create({ user, nfcId, template, socialLinks, website, bio, customFields });
-    res.status(201).json(card);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
+// Admin routes
+router.route('/admin').get(protect, authorize('admin'), getCardsForAdmin);
 
-// @desc    Get card by ID
-// @route   GET /api/cards/:id
-// @access  Private/Admin
-router.get('/:id', protect, authorize('admin'), async (req, res) => {
-  try {
-    const card = await Card.findById(req.params.id);
-    if (!card) return res.status(404).json({ message: 'Card not found' });
-    res.json({ card });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
+// User card management routes
+router.route('/my-cards')
+    .get(protect, getMyCards)
+    .post(protect, createCard);
 
-// @desc    Update card
-// @route   PUT /api/cards/:id
-// @access  Private/Admin
-router.put('/:id', protect, authorize('admin'), async (req, res) => {
-  try {
-    const updates = req.body;
-    const card = await Card.findByIdAndUpdate(req.params.id, updates, { new: true });
-    if (!card) return res.status(404).json({ message: 'Card not found' });
-    res.json({ card });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
+router.route('/my-cards/:id')
+    .get(protect, getMyCardById)
+    .put(protect, updateMyCard)
+    .delete(protect, deleteMyCard);
 
-// @desc    Delete card
-// @route   DELETE /api/cards/:id
-// @access  Private/Admin
-router.delete('/:id', protect, authorize('admin'), async (req, res) => {
-  try {
-    const card = await Card.findByIdAndDelete(req.params.id);
-    if (!card) return res.status(404).json({ message: 'Card not found' });
-    res.json({ message: 'Card deleted' });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
+// Admin card management routes
+router.route('/')
+    .post(protect, authorize('admin'), createCard);
 
-module.exports = router; 
+router.route('/:id')
+    .get(protect, authorize('admin'), getCardByIdForAdmin)
+    .put(protect, authorize('admin'), updateCard)
+    .delete(protect, authorize('admin'), deleteCard);
+
+router.route('/').get(protect, authorize('admin'), getCardsForAdmin);
+
+// Card analytics drill-down (admin only)
+router.get('/:id/analytics', protect, authorize('admin'), getCardAnalytics);
+
+// Get all tap logs for a card (admin only)
+router.get('/:id/taplogs', protect, authorize('admin'), getCardTapLogs);
+
+module.exports = router;
