@@ -15,21 +15,22 @@ async function testSubscriptionTracking() {
       billingPeriod: 'monthly'
     };
 
-    const createResponse = await axios.post(`${API_BASE_URL}/api/payments/maya/checkout`, subscriptionData);
+    const createResponse = await axios.post(`${API_BASE_URL}/maya-checkout`, subscriptionData);
     console.log('✅ Subscription created successfully');
     console.log('   Reference Number:', createResponse.data.redirectUrl ? 'Generated' : 'Failed');
     console.log('   Redirect URL:', createResponse.data.redirectUrl ? 'Available' : 'Not available');
 
-    // Test 2: Check subscription status
+    // Test 2: Check subscription status (if we had a real reference number)
     console.log('\n2. Testing subscription status check...');
     console.log('   Note: This would require a real reference number from a completed payment');
-    console.log('   Endpoint: GET /api/payments/subscription/status/:referenceNumber');
+    console.log('   Endpoint: GET /api/subscription/status/:referenceNumber');
 
     // Test 3: Test webhook endpoints
     console.log('\n3. Testing webhook endpoints...');
     
+    // Test success webhook
     try {
-      await axios.post(`${API_BASE_URL}/api/payments/webhook/success`, {
+      await axios.post(`${API_BASE_URL}/webhook/payment-success`, {
         requestReferenceNumber: 'TEST-SUCCESS-123',
         paymentId: 'TEST-PAYMENT-123',
         amount: 299
@@ -39,8 +40,9 @@ async function testSubscriptionTracking() {
       console.log('❌ Success webhook endpoint error:', error.response?.status || error.message);
     }
 
+    // Test failure webhook
     try {
-      await axios.post(`${API_BASE_URL}/api/payments/webhook/failure`, {
+      await axios.post(`${API_BASE_URL}/webhook/payment-failure`, {
         requestReferenceNumber: 'TEST-FAILURE-123',
         errorMessage: 'Test failure message'
       });
@@ -49,8 +51,9 @@ async function testSubscriptionTracking() {
       console.log('❌ Failure webhook endpoint error:', error.response?.status || error.message);
     }
 
+    // Test cancel webhook
     try {
-      await axios.post(`${API_BASE_URL}/api/payments/webhook/cancel`, {
+      await axios.post(`${API_BASE_URL}/webhook/payment-cancel`, {
         requestReferenceNumber: 'TEST-CANCEL-123'
       });
       console.log('✅ Cancel webhook endpoint working');

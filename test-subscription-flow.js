@@ -15,10 +15,11 @@ async function testSubscriptionFlow() {
       billingPeriod: 'monthly'
     };
 
-    const createResponse = await axios.post(`${API_BASE_URL}/api/payments/maya/checkout`, subscriptionData);
+    const createResponse = await axios.post(`${API_BASE_URL}/maya-checkout`, subscriptionData);
     console.log('✅ Subscription created successfully');
     console.log('   Redirect URL:', createResponse.data.redirectUrl);
     
+    // Extract reference number from redirect URL if possible
     const redirectUrl = createResponse.data.redirectUrl;
     console.log('   Maya Checkout URL:', redirectUrl);
 
@@ -38,17 +39,20 @@ async function testSubscriptionFlow() {
     // Test 3: Test webhook endpoints with a test subscription
     console.log('\n3. Testing webhook endpoints...');
     
-    const testSubscription = await axios.post(`${API_BASE_URL}/api/payments/maya/checkout`, {
+    // Create a test subscription first
+    const testSubscription = await axios.post(`${API_BASE_URL}/maya-checkout`, {
       email: 'webhook-test@example.com',
       phone: '+1234567890',
       plan: 'Starter Tap',
       billingPeriod: 'monthly'
     });
 
+    // Extract reference number from the response
     const testRefNumber = `TEST-WEBHOOK-${Date.now()}`;
     
+    // Test success webhook
     try {
-      const successResponse = await axios.post(`${API_BASE_URL}/api/payments/webhook/success`, {
+      const successResponse = await axios.post(`${API_BASE_URL}/webhook/payment-success`, {
         requestReferenceNumber: testRefNumber,
         paymentId: 'TEST-PAYMENT-123',
         amount: 99
@@ -58,8 +62,9 @@ async function testSubscriptionFlow() {
       console.log('❌ Success webhook error:', error.response?.status || error.message);
     }
 
+    // Test failure webhook
     try {
-      const failureResponse = await axios.post(`${API_BASE_URL}/api/payments/webhook/failure`, {
+      const failureResponse = await axios.post(`${API_BASE_URL}/webhook/payment-failure`, {
         requestReferenceNumber: testRefNumber,
         errorMessage: 'Test failure message'
       });
@@ -68,8 +73,9 @@ async function testSubscriptionFlow() {
       console.log('❌ Failure webhook error:', error.response?.status || error.message);
     }
 
+    // Test cancel webhook
     try {
-      const cancelResponse = await axios.post(`${API_BASE_URL}/api/payments/webhook/cancel`, {
+      const cancelResponse = await axios.post(`${API_BASE_URL}/webhook/payment-cancel`, {
         requestReferenceNumber: testRefNumber
       });
       console.log('✅ Cancel webhook working');
