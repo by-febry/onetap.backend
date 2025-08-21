@@ -18,16 +18,30 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://onetapp-webpage-3wnn.vercel.app',
+  'https://onetapp-webpage.vercel.app',
+  'https://onetapp-client1-card.vercel.app',
+  'http://localhost:60275',
+  'http://localhost:63726'
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://onetapp-webpage-3wnn.vercel.app',
-    'https://onetapp-webpage.vercel.app',
-    'https://onetapp-client1-card.vercel.app',
-    'http://localhost:60275',
-    'http://localhost:63726'
-  ]
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
+
+app.options('*', cors());
 
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
