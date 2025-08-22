@@ -13,8 +13,8 @@ async function createAdminUser() {
     });
 
     const username = 'admin';
-    const email = 'admin@example.com';
-    const password = 'admin123'; // Change this after first login
+    const email = 'admin1@example.com';
+    const password = 'admin1234'; // Change this after first login
     const role = 'admin';
     const status = 'active';
 
@@ -29,7 +29,7 @@ async function createAdminUser() {
     const adminUser = new User({
       username,
       email,
-      passwordHash,
+      password,
       role,
       status,
     });
